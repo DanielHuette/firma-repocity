@@ -55,6 +55,21 @@ MIGRATION_ORDER: tuple[str, ...] = (
     f"{_COCKPIT}/007_audit_anfragen.sql",
     f"{_RADAR}/016_kundensuche_monatsservice.sql",
     f"{_COCKPIT}/008_monatsservice.sql",
+    f"{_RADAR}/017_audit_events.sql",
+    f"{_RADAR}/018_audit_manager.sql",
+    f"{_RADAR}/019_keyword_scope.sql",
+    f"{_RADAR}/020_audit_costs.sql",
+    f"{_RADAR}/021_audit_estimates.sql",
+    f"{_CRM}/014_angebot.sql",
+    f"{_CRM}/015_angebot_positionen.sql",
+    f"{_COCKPIT}/009_radarauditor.sql",
+    f"{_COCKPIT}/010_radar_ohne_halt.sql",
+    f"{_RADAR}/022_audit_repair.sql",
+    f"{_COCKPIT}/011_radar_neustart.sql",
+    f"{_RADAR}/023_measurement_protocol_and_control.sql",
+    f"{_RADAR}/024_control_state.sql",
+    f"{_RADAR}/025_control_not_measured.sql",
+    f"{_RADAR}/030_product_radar_areas_sections.sql",
 )
 
 ADMIN_ID = UUID("00000000-0000-4000-8000-00000000000a")
