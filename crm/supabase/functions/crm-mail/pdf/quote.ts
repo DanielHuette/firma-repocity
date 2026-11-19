@@ -1,5 +1,3 @@
-// Quote PDF rendered by the CRM when no audit-plus-quote PDF of the RadarAuditor exists. A quote
-// has no stored snapshot, so it uses the current company settings and customer data.
 import { WorkerError } from "../errors.ts";
 import { type Item, itemTable, SMALL_BUSINESS_NOTE, type Totals, toItems, totalRows } from "./items.ts";
 import { type Block, letterHead, type Party, salutation, type Seller, toParty, toSeller } from "./model.ts";
@@ -19,7 +17,6 @@ export interface QuoteData {
   items: Item[];
 }
 
-/** A quote row with embedded quote_items and customers, and the settings row. */
 export function toQuoteData(row: Record<string, unknown>, settings: Record<string, unknown>): QuoteData {
   const number = String(row.number ?? "");
   if (row.customers == null) throw new WorkerError(`Angebot ${number}: Kundendaten fehlen.`);

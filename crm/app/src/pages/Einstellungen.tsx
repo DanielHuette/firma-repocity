@@ -1,6 +1,3 @@
-// Everything that is set once: company data for documents, products and packages, subscriptions,
-// contract templates, mail texts and the review link, business hours and the calendar link, the texts
-// of the phone assistant, and how website, agents and other tools connect to the CRM.
 import { useLocation } from "preact-iso";
 import { useEffect, useState } from "preact/hooks";
 import { saveSettings, signOut } from "../api/crm";
@@ -13,15 +10,13 @@ import { Abos } from "./einstellungen/Abos";
 import { Anbindungen } from "./einstellungen/Anbindungen";
 import { Kalender } from "./einstellungen/Kalender";
 import { MailTexte } from "./einstellungen/MailTexte";
-import { Produkte } from "./einstellungen/Produkte";
 import { Telefonassistent } from "./einstellungen/Telefonassistent";
 import { Vorlagen } from "./einstellungen/Vorlagen";
 
-type Section = "firma" | "produkte" | "abos" | "vorlagen" | "mails" | "kalender" | "telefon" | "anbindungen" | "konto";
+type Section = "firma" | "abos" | "vorlagen" | "mails" | "kalender" | "telefon" | "anbindungen" | "konto";
 
 const SECTIONS: { id: Section; label: string }[] = [
   { id: "firma", label: "Firma" },
-  { id: "produkte", label: "Produkte & Pakete" },
   { id: "abos", label: "Abos" },
   { id: "vorlagen", label: "Vertragsvorlagen" },
   { id: "mails", label: "E-Mails & Bewertungen" },
@@ -39,7 +34,6 @@ export function Einstellungen({ email }: { email: string }) {
       <PageHead kicker="Einstellungen" title="Einmal einrichten" />
       <Tabs value={section} onChange={setSection} options={SECTIONS} />
       {section === "firma" && <Firma />}
-      {section === "produkte" && <Produkte />}
       {section === "abos" && <Abos />}
       {section === "vorlagen" && <Vorlagen />}
       {section === "mails" && <MailTexte />}
@@ -117,8 +111,6 @@ function CompanyFields({ form, set }: { form: Settings; set: <K extends keyof Se
   );
 }
 
-// Only the fields of this tab: the other tabs save their own, and a stale copy of theirs must not
-// overwrite what they saved meanwhile.
 function companyPart(form: Settings): Partial<Settings> {
   const keys: (keyof Settings)[] = [...COMPANY_FIELDS.map((field) => field.key), "payment_days", "quote_valid_days", "small_business",
     "datev_consultant_number", "datev_client_number", "datev_tax_free_account"];

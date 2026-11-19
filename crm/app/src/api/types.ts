@@ -1,4 +1,3 @@
-// Rows of the crm schema as the app reads them. Amounts arrive as numbers from the REST interface.
 
 export type CustomerKind = "company" | "person";
 export type CustomerSource = "manual" | "website" | "phone" | "email" | "referral" | "agent" | "radarauditor" | "other";
@@ -14,8 +13,7 @@ export type PaymentMethod = "transfer" | "cash" | "paypal" | "card" | "other";
 export type ApprovalKind = "dunning" | "publication" | "quote" | "invoice" | "payment" | "contract" | "reversal" | "follow_up" | "assistant_mail" | "other";
 export type ApprovalStatus = "pending" | "approved" | "rejected";
 export type VatRate = 0 | 7 | 19;
-export type Billing = "once" | "monthly";
-/** Where a customer or inquiry came from in detail (migration 011_herkunft.sql); null is unknown. */
+export type Billing = "once" | "monthly" | "hourly" | "piece";
 export type Channel = "google_search" | "google_maps" | "linkedin" | "instagram" | "facebook" | "xing" | "youtube" | "tiktok" | "x" | "threads"
   | "reddit" | "forum" | "newsletter" | "referral" | "other";
 
@@ -49,13 +47,10 @@ export interface Settings {
   datev_tax_free_account: string;
   assistant_greeting: string;
   assistant_facts: string;
-  /** "08:00:00" as the database writes a time. */
   business_hours_start: string;
   business_hours_end: string;
-  /** ISO weekdays, 1 = Monday. */
   business_days: number[];
   reminder_minutes: number;
-  /** The secret part of the calendar feed link. */
   calendar_token: string;
 }
 
@@ -75,7 +70,6 @@ export interface Customer {
   source: CustomerSource;
   marketing_consent: boolean;
   no_review_requests: boolean;
-  /** No follow-up mails on quotes; the customer may also set it through the link in such a mail. */
   no_follow_ups: boolean;
   channel: Channel | null;
   campaign: string;
@@ -113,10 +107,13 @@ export interface Deal {
 export interface Product {
   id: string;
   name: string;
+  category: string;
   description: string;
+  scope: string;
   unit: string;
   price_net: number;
   vat_rate: VatRate;
+  vat_note: string;
   billing: Billing;
   active: boolean;
 }
@@ -127,6 +124,9 @@ export interface LineItem {
   product_id: string | null;
   title: string;
   description: string;
+  scope?: string;
+  billing?: Billing | null;
+  vat_note?: string;
   quantity: number;
   unit: string;
   unit_price_net: number;
@@ -303,14 +303,11 @@ export interface Overview {
   mail_triage_waiting: number;
   mail_triage_failed: number;
   appointments_today: number;
-  /** "10:00 Erstgespräch", or the title alone without a time; those without time first. */
   appointments_today_list: string[];
-  /** The same appointments with kind and place (migration 013_audit_anfragen.sql). */
   appointments_today_items: TodayAppointment[];
 }
 
 export interface TodayAppointment {
-  /** HH:MM in Berlin time, null without a time. */
   clock: string | null;
   title: string;
   kind: AppointmentKind;
@@ -492,7 +489,6 @@ export interface AuditRun {
 export type AuditStatus = "requested" | "collecting" | "collected" | "scored" | "awaiting_analysis" | "analysed" | "reported" | "failed";
 export type AuditPurpose = "sales" | "monthly";
 
-/** A RadarAuditor audit (schema public) of a website that belongs to a CRM customer. */
 export interface Audit {
   id: string;
   status: AuditStatus;
@@ -529,7 +525,6 @@ export interface TranscriptLine {
   text: string;
 }
 
-/** A finished call of the phone assistant; the transcript arrives as JSON and is checked before use. */
 export interface CallRow {
   id: string;
   customer_id: string | null;
@@ -543,8 +538,6 @@ export interface CallRow {
 }
 
 export type Call = Omit<CallRow, "transcript" | "summary"> & { transcript: TranscriptLine[]; summary: string };
-
-// Finances (migration 007_finanzen.sql)
 
 export type TransactionDirection = "in" | "out";
 export type TransactionStatus = "paid" | "suggested" | "open" | "other_income" | "private" | "expense" | "reversed";
@@ -565,7 +558,6 @@ export interface BankTransaction {
   status: TransactionStatus;
   reversal: boolean;
   end_to_end_id: string;
-  /** On a netted reversal: the booking it took back. */
   reverses_transaction_id: string | null;
   invoice_id: string | null;
   payment_id: string | null;
@@ -573,7 +565,6 @@ export interface BankTransaction {
   invoice?: Pick<Invoice, "id" | "number"> | null;
 }
 
-/** A reversal netted in the period with the booking it took back, for the tax adviser. */
 export interface NettedReversal {
   booked_on: string;
   amount: number;
@@ -643,7 +634,6 @@ export interface Expense {
   account: string | null;
   vat_rate: VatRate;
   created_at: string;
-  /** The reversal that took this expense back; it then no longer counts. */
   reversed_by: string | null;
   receipts?: Receipt[];
 }
@@ -656,8 +646,6 @@ export interface ProfitMonth {
   profit: number;
 }
 
-// Calendar (migration 009_kalender.sql)
-
 export type AppointmentKind = "visit" | "callback" | "call" | "video" | "other";
 export type AppointmentStatus = "planned" | "done" | "cancelled";
 
@@ -665,7 +653,6 @@ export interface Appointment {
   id: string;
   kind: AppointmentKind;
   title: string;
-  /** The Berlin day; a callback without a time has only this. */
   starts_on: string;
   starts_at: string | null;
   ends_at: string | null;
@@ -680,18 +667,13 @@ export interface Appointment {
   customer?: Pick<Customer, "id" | "name" | "email"> | null;
 }
 
-// Where customers come from (migration 011_herkunft.sql)
-
 export interface ChannelReportRow {
-  /** One of Channel, or "unknown" for customers and inquiries without one. */
   channel: Channel | "unknown";
   label: string;
   inquiries: number;
   customers: number;
   revenue: number;
 }
-
-// Audit requests from the website (migration 013_audit_anfragen.sql)
 
 export type AuditRequestKind = "visit" | "call" | "video";
 export type AuditRequestStatus = "open" | "proposed" | "booked";

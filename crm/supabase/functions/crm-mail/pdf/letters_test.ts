@@ -25,6 +25,26 @@ Deno.test("quote PDF names number, dates, items in order and the total", async (
   assert(text.some((run) => run.includes("§ 19 Abs. 1 UStG")));
 });
 
+Deno.test("quote PDF carries description, scope, price kind and VAT note of every item", async () => {
+  const row = {
+    ...quoteRow,
+    quote_items: [{
+      position: 1, title: "Webseite", description: "Fünf Seiten mit Texten", scope: "Design\nProgrammierung\nSuchmaschinen-Grundlagen", billing: "monthly",
+      vat_note: "zzgl. gesetzlicher Umsatzsteuer", quantity: 1, unit: "Monat", unit_price_net: 90, vat_rate: 19,
+    }],
+  };
+  const text = (await pdfText(await quotePdf(toQuoteData(row, settings)))).join(" ");
+  for (const expected of ["Fünf Seiten mit Texten", "Design", "Programmierung", "Suchmaschinen-Grundlagen", "Preisart: Monatlich", "Mehrwertsteuer: zzgl. gesetzlicher Umsatzsteuer"]) {
+    assert(text.includes(expected), `missing: ${expected}`);
+  }
+});
+
+Deno.test("quote PDF leaves out the price kind of a free line", async () => {
+  const text = (await pdfText(await quotePdf(toQuoteData(quoteRow, settings)))).join(" ");
+  assertFalse(text.includes("Preisart"));
+  assertFalse(text.includes("Mehrwertsteuer:"));
+});
+
 Deno.test("a quote without its customer is refused", () => {
   assertThrows(() => toQuoteData({ ...quoteRow, customers: null }, settings), Error, "AN-2026-0004");
 });

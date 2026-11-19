@@ -27,6 +27,14 @@ describe("kindLabel", () => {
     ["audit-vorschlag", "Terminvorschlag"],
     ["audit-termin", "Audit-Termin"],
     ["monatsservice", "Monatsservice"],
+    ["radar-gestartet", "Audit gestartet"],
+    ["radar-fertig", "Audit fertig"],
+    ["radar-unvollstaendig", "Audit unvollständig"],
+    ["radar-fehlgeschlagen", "Audit fehlgeschlagen"],
+    ["radar-messung", "Messung fehlgeschlagen"],
+    ["radar-ohne-messwert", "Prüfungen ohne Messwert"],
+    ["radar-warnung", "Warnung des Audit-Agenten"],
+    ["sammler-zurueck", "Sammler wieder da"],
   ])("names %s as %s", (kind, label) => {
     expect(kindLabel(kind)).toBe(label);
   });

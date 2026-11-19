@@ -1,5 +1,3 @@
-// Every read and write of the Cockpit: the message centre, the push devices and the figures of the
-// apps below it.
 import type { PostgrestError, RealtimeChannel } from "@supabase/supabase-js";
 import { messageActions, parseOutcome, type ActionOutcome } from "../lib/actions";
 import { QueryError, UploadError } from "../lib/errors";
@@ -7,7 +5,7 @@ import { recordingPath } from "../lib/recording";
 import { supabase } from "./supabase";
 import type { AssistantRequest, CrmOverview, Device, Message } from "./types";
 
-function unwrap<T>(action: string, result: { data: T | null; error: PostgrestError | null }): T {
+export function unwrap<T>(action: string, result: { data: T | null; error: PostgrestError | null }): T {
   if (result.error !== null) throw new QueryError(action, result.error.message, result.error.code);
   if (result.data === null) throw new QueryError(action, "keine Daten", null);
   return result.data;
@@ -16,8 +14,6 @@ function unwrap<T>(action: string, result: { data: T | null; error: PostgrestErr
 function check(action: string, result: { error: PostgrestError | null }): void {
   if (result.error !== null) throw new QueryError(action, result.error.message, result.error.code);
 }
-
-// Session and role
 
 export async function isAdmin(): Promise<boolean> {
   return unwrap("Rolle prüfen", await supabase.schema("public").rpc("is_admin")) === true;
@@ -37,8 +33,6 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 }
 
-// Messages
-
 const MESSAGE_FIELDS = "id, app, kind, title, body, link, priority, created_at, read_at, pushed_at, push_error, "
   + "tag, actions, action_token, acted_at, acted_action, action_result";
 
@@ -48,7 +42,6 @@ export async function listMessages(limit = 200): Promise<Message[]> {
   return rows.map((row) => ({ ...row, actions: messageActions(row.actions) }));
 }
 
-/** Carries out one button of a message, the same way a tap on the notification does. */
 export async function runAction(message: Message, action: string): Promise<ActionOutcome> {
   return parseOutcome(unwrap("Aktion ausführen", await supabase.rpc("run_action", {
     p_message: message.id, p_token: message.action_token, p_action: action,
@@ -67,7 +60,6 @@ export async function sendTestMessage(): Promise<void> {
   }));
 }
 
-/** Calls back for every new or changed message while the app is open. */
 export function watchMessages(onChange: () => void): () => void {
   const channel: RealtimeChannel = supabase
     .channel("cockpit-messages")
@@ -78,14 +70,9 @@ export function watchMessages(onChange: () => void): () => void {
   };
 }
 
-// Apps below the Cockpit
-
 export async function loadCrmOverview(): Promise<CrmOverview> {
   return unwrap("CRM-Zahlen laden", await supabase.schema("crm").rpc("today_overview")) as CrmOverview;
 }
-
-// Assistant: requests go to crm.ask_assistant, recordings first into the private bucket the server
-// worker reads and empties.
 
 const ASSISTANT_BUCKET = "crm-assistant";
 const REQUEST_FIELDS = "id, text, audio_path, status, result_text, created_at, finished_at";
@@ -99,8 +86,6 @@ export async function askAssistant(text: string): Promise<void> {
   check("Anfrage senden", await supabase.schema("crm").rpc("ask_assistant", { p_text: text, p_audio_path: null }));
 }
 
-/** Stores a recording under a new path and returns that path. The raw bytes go as the request body
- * with the audio/wav type; a Blob would be wrapped into a multipart form. */
 export async function uploadRecording(wav: ArrayBuffer): Promise<string> {
   const path = recordingPath();
   let failure: string | null;
@@ -117,8 +102,6 @@ export async function uploadRecording(wav: ArrayBuffer): Promise<string> {
 export async function askAssistantAboutRecording(path: string): Promise<void> {
   check("Anfrage senden", await supabase.schema("crm").rpc("ask_assistant", { p_text: null, p_audio_path: path }));
 }
-
-// Push devices
 
 export async function pushKey(): Promise<string> {
   const result = await supabase.functions.invoke<{ publicKey?: string; error?: string }>("cockpit-push", { body: { action: "key" } });

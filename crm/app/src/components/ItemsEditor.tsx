@@ -1,21 +1,21 @@
-// Positions of a quote or an invoice draft: pick a product or type a free line, totals update live.
 import { Fragment } from "preact";
 import { listProducts } from "../api/crm";
 import type { LineItem, Product, VatRate } from "../api/types";
 import { useAsync } from "../hooks/useAsync";
 import { euro } from "../lib/format";
 import { documentTotals, lineNet, parseAmount } from "../lib/money";
+import { itemNotes } from "../lib/offering";
 
 const RATES: VatRate[] = [19, 7, 0];
 
 export function emptyItem(position: number): LineItem {
-  return { position, product_id: null, title: "", description: "", quantity: 1, unit: "Stück", unit_price_net: 0, vat_rate: 19 };
+  return { position, product_id: null, title: "", description: "", scope: "", billing: null, vat_note: "", quantity: 1, unit: "Stück", unit_price_net: 0, vat_rate: 19 };
 }
 
 export function itemFromProduct(product: Product, position: number): LineItem {
   return {
-    position, product_id: product.id, title: product.name, description: product.description, quantity: 1, unit: product.unit,
-    unit_price_net: product.price_net, vat_rate: product.vat_rate,
+    position, product_id: product.id, title: product.name, description: product.description, scope: product.scope, billing: product.billing,
+    vat_note: product.vat_note, quantity: 1, unit: product.unit, unit_price_net: product.price_net, vat_rate: product.vat_rate,
   };
 }
 
@@ -27,13 +27,28 @@ interface RowProps {
   onRemove: () => void;
 }
 
+function Notes({ item }: { item: LineItem }) {
+  return <>{itemNotes(item).map((note) => <div key={note} class="small muted">{note}</div>)}</>;
+}
+
 function TitleCell({ item, readOnly, onUpdate }: Pick<RowProps, "item" | "readOnly" | "onUpdate">) {
-  if (readOnly) return <td><strong>{item.title}</strong>{item.description !== "" && <div class="small muted">{item.description}</div>}</td>;
+  if (readOnly) {
+    return (
+      <td>
+        <strong>{item.title}</strong>
+        {item.description !== "" && <div class="small muted">{item.description}</div>}
+        {(item.scope ?? "") !== "" && <div class="small muted message">{item.scope}</div>}
+        <Notes item={item} />
+      </td>
+    );
+  }
   return (
     <td>
       <div class="stack stack--tight">
         <input aria-label="Bezeichnung" placeholder="Bezeichnung" value={item.title} onInput={(event) => { onUpdate({ title: event.currentTarget.value }); }} />
         <input aria-label="Beschreibung" placeholder="Beschreibung (optional)" value={item.description} onInput={(event) => { onUpdate({ description: event.currentTarget.value }); }} />
+        <textarea class="textarea--short" aria-label="Leistungsumfang" placeholder="Leistungsumfang (optional)" value={item.scope ?? ""} onInput={(event) => { onUpdate({ scope: event.currentTarget.value }); }} />
+        <Notes item={item} />
       </div>
     </td>
   );

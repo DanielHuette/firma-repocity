@@ -1,10 +1,8 @@
-// Message centre: everything the RepoCity apps report, newest first, plus the figures of each app
-// at a glance. Tapping a message marks it read and opens the place where it can be dealt with;
-// its buttons carry out the same one-tap actions as the notification on the lock screen.
 import { useEffect, useState } from "preact/hooks";
 import { useFeedContext } from "../App";
 import { loadCrmOverview, markRead, runAction } from "../api/cockpit";
 import type { AppName, CrmOverview, Message } from "../api/types";
+import { RadarCard } from "../components/RadarCard";
 import { Empty, ErrorNote, Kpi, Loading, PageHead, Tabs } from "../components/ui";
 import { useAction, useAsync } from "../hooks/useAsync";
 import { actedSummary, openActions, type ActionOutcome } from "../lib/actions";
@@ -12,7 +10,9 @@ import { dayLabel, euro, time } from "../lib/format";
 import { kindLabel } from "../lib/kinds";
 import { enablePush, pushState, type PushState } from "../lib/push";
 
-const APP_LABEL: Record<AppName, string> = { crm: "CRM", marketing: "Marketing", trading: "Trading", system: "Cockpit" };
+const APP_LABEL: Record<AppName, string> = {
+  crm: "CRM", marketing: "Marketing", trading: "Trading", system: "Cockpit", radarauditor: "RadarAuditor",
+};
 const PRIORITY_LABEL = { info: "", wichtig: "Wichtig", dringend: "Dringend" } as const;
 
 type View = "ungelesen" | "alle";
@@ -82,7 +82,6 @@ function ActionButtons({ message, onDone }: { message: Message; onDone: (message
   const action = useAction();
   const [outcome, setOutcome] = useState<ActionOutcome | null>(null);
   const buttons = openActions(message);
-  // Once the list shows the action as done, its own line replaces a successful outcome.
   const showOutcome = outcome !== null && (!outcome.ok || message.acted_at === null);
   const run = (key: string) => {
     void action.run(async () => {
@@ -233,6 +232,7 @@ export function Zentrale() {
       <PushOffer />
       <ErrorNote message={crm.error} />
       {crm.data !== undefined && <CrmCard overview={crm.data} />}
+      <RadarCard reloadKey={feed.messages?.length} />
       <Feed />
     </div>
   );

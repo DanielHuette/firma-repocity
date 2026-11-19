@@ -1,5 +1,3 @@
-// Routes of the signed-in CRM; without a session only the sign-in page is shown. The print view
-// renders outside the frame so the sheet is all that reaches the printer.
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { LocationProvider, Route, Router, useLocation } from "preact-iso";
 import { loadOverview, loadSettings } from "./api/crm";
@@ -20,6 +18,7 @@ import { Heute } from "./pages/Heute";
 import { Kalender } from "./pages/Kalender";
 import { Kunde } from "./pages/Kunde";
 import { Kunden } from "./pages/Kunden";
+import { Leistungen } from "./pages/Leistungen";
 import { Rechnung } from "./pages/Rechnung";
 import { Rechnungen } from "./pages/Rechnungen";
 import { Service } from "./pages/Service";
@@ -70,7 +69,6 @@ function useWorkspaceData(admin: boolean | undefined, path: string) {
     loadOverview().then((overview) => { setPending(overview.pending_approvals + overview.unknown_senders); }, () => undefined);
   }, []);
   useEffect(() => { if (admin === true) reloadSettings(); }, [admin, reloadSettings]);
-  // The badge follows navigation, so decisions made elsewhere show up without a reload.
   useEffect(() => { if (admin === true) reloadPending(); }, [admin, path, reloadPending]);
   return { settings, reloadSettings, pending, reloadPending };
 }
@@ -83,6 +81,7 @@ function Routes({ email, onPendingChange }: { email: string; onPendingChange: ()
       <Route path="/kunden" component={Kunden} />
       <Route path="/kunde/:id" component={({ id }: { id: string }) => <Kunde id={id} />} />
       <Route path="/verkauf" component={Verkauf} />
+      <Route path="/leistungen" component={Leistungen} />
       <Route path="/angebot/:id" component={({ id }: { id: string }) => <Angebot id={id} />} />
       <Route path="/rechnungen" component={Rechnungen} />
       <Route path="/rechnung/:id" component={({ id }: { id: string }) => <Rechnung id={id} />} />

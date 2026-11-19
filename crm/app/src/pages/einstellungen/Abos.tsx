@@ -1,5 +1,3 @@
-// Monthly subscriptions: each one is billed automatically and, when its product includes audits,
-// gets a monthly audit.
 import { useState } from "preact/hooks";
 import { createSubscription, listProducts, listSubscriptions, setSubscriptionActive } from "../../api/crm";
 import type { Subscription } from "../../api/types";
@@ -95,7 +93,7 @@ function ProductChoice({ value, onChange }: { value: string; onChange: (id: stri
         <option value="">Bitte wählen</option>
         {(products.data ?? []).map((item) => <option key={item.id} value={item.id}>{item.name} ({euro(item.price_net)})</option>)}
       </select>
-      {products.data?.length === 0 && <span class="small muted">Lege zuerst unter „Produkte & Pakete“ ein monatliches Produkt an.</span>}
+      {products.data?.length === 0 && <span class="small muted">Lege zuerst unter „Angebot“ ein monatliches Produkt an.</span>}
       <ErrorNote message={products.error} />
     </Field>
   );

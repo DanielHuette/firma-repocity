@@ -1,6 +1,6 @@
 import type { MessageAction } from "../lib/actions";
 
-export type AppName = "crm" | "marketing" | "trading" | "system";
+export type AppName = "crm" | "marketing" | "trading" | "system" | "radarauditor";
 export type MessagePriority = "info" | "wichtig" | "dringend";
 
 export interface Message {
@@ -32,7 +32,6 @@ export interface Device {
   failures: number;
 }
 
-/** Figures of the CRM home page, read from crm.today_overview(). */
 export interface CrmOverview {
   new_inquiries: number;
   overdue_invoices: number;
@@ -49,14 +48,91 @@ export interface CrmOverview {
 
 export type AssistantStatus = "queued" | "claimed" | "done" | "failed";
 
-/** A request to the assistant, read from crm.assistant_requests. */
 export interface AssistantRequest {
   id: string;
-  /** What Daniel typed, or the transcript once the server has turned the recording into text. */
   text: string | null;
   audio_path: string | null;
   status: AssistantStatus;
   result_text: string;
   created_at: string;
   finished_at: string | null;
+}
+
+export type AuditStatus =
+  | "requested" | "collecting" | "collected" | "scored" | "awaiting_analysis" | "analysed" | "reported" | "failed" | "halted";
+export type AuditPurpose = "sales" | "monthly";
+export type EstimateStatus = "covered" | "insufficient" | "unchecked";
+export type EventKind = "route" | "check" | "manager" | "repair";
+export type EventResult = "gemessen" | "fehlgeschlagen" | "ausgesetzt" | "Schritt mit Daniel" | "offen" | "neu gestartet" | "Warnung";
+
+export interface RadarCustomer {
+  id: string;
+  name: string;
+}
+
+export interface RadarAudit {
+  id: string;
+  customer_id: string;
+  status: AuditStatus;
+  requested_at: string;
+  finished_at: string | null;
+  total_score: number | null;
+  error: string | null;
+  purpose: AuditPurpose | null;
+  estimate_status: EstimateStatus | null;
+  estimate_note: string | null;
+}
+
+export interface RadarEvent {
+  id: string;
+  audit_id: string;
+  occurred_at: string;
+  kind: EventKind;
+  result: EventResult;
+  label: string;
+  reason: string | null;
+  stage: number | null;
+}
+
+export interface RadarCost {
+  audit_id: string;
+  source: string;
+  service: string;
+  calls: number;
+  cost: number;
+  tokens_in: number;
+  tokens_out: number;
+}
+
+export interface RadarEstimate {
+  audit_id: string;
+  source: string;
+  service: string;
+  calls: number;
+  unit_cost: number;
+  cost: number;
+}
+
+export interface RadarUsage {
+  day: string;
+  source: string;
+  count: number;
+  cost: number;
+}
+
+export interface RadarKeyword {
+  customer_id: string;
+  scope: "local" | "nationwide";
+}
+
+export interface RadarSnapshot {
+  heartbeat: unknown;
+  sources: unknown;
+  customers: RadarCustomer[];
+  audits: RadarAudit[];
+  events: RadarEvent[];
+  costs: RadarCost[];
+  estimates: RadarEstimate[];
+  usage: RadarUsage[];
+  keywords: RadarKeyword[];
 }

@@ -1,6 +1,3 @@
-// Printable A4 document for a quote or an invoice; "Als PDF speichern" in the print dialog makes the PDF.
-// Finalised invoices print from the snapshots taken at finalisation, so later edits of settings or
-// customer data never change an issued invoice.
 import { Fragment } from "preact";
 import { useEffect } from "preact/hooks";
 import { loadContract, loadCustomer, loadInvoice, loadQuote, loadSettings } from "../api/crm";
@@ -9,6 +6,7 @@ import { ErrorNote, Loading } from "../components/ui";
 import { useAsync } from "../hooks/useAsync";
 import { date, euro, quantity } from "../lib/format";
 import { documentTotals, lineNet } from "../lib/money";
+import { itemNotes } from "../lib/offering";
 
 interface Sheet {
   kind: "Angebot" | "Rechnung" | "Stornorechnung" | "Rechnungsentwurf";
@@ -126,6 +124,16 @@ function Addressee({ sheet }: { sheet: Sheet }) {
   );
 }
 
+function ItemDetails({ item }: { item: LineItem }) {
+  return (
+    <>
+      {item.description !== "" && <div class="sheet__desc">{item.description}</div>}
+      {(item.scope ?? "") !== "" && <div class="sheet__desc">{item.scope}</div>}
+      {itemNotes(item).map((note) => <div key={note} class="sheet__desc">{note}</div>)}
+    </>
+  );
+}
+
 function SheetItems({ items, smallBusiness }: { items: LineItem[]; smallBusiness: boolean }) {
   const totals = documentTotals(items, smallBusiness);
   return (
@@ -136,7 +144,7 @@ function SheetItems({ items, smallBusiness }: { items: LineItem[]; smallBusiness
           {items.map((item, index) => (
             <tr key={index}>
               <td>{index + 1}</td>
-              <td><strong>{item.title}</strong>{item.description !== "" && <div class="sheet__desc">{item.description}</div>}</td>
+              <td><strong>{item.title}</strong><ItemDetails item={item} /></td>
               <td class="num">{quantity(item.quantity)} {item.unit}</td>
               <td class="num">{euro(item.unit_price_net)}</td>
               {!smallBusiness && <td class="num">{item.vat_rate} %</td>}
@@ -177,7 +185,6 @@ function Document({ sheet }: { sheet: Sheet }) {
   );
 }
 
-// Contracts print their rendered text as it was created, so later template edits never change them.
 function ContractPrint({ id }: { id: string }) {
   const data = useAsync(async () => {
     const [contract, settings] = await Promise.all([loadContract(id), loadSettings()]);

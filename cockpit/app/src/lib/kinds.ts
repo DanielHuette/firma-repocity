@@ -1,4 +1,3 @@
-// German names of the message kinds the database writes into cockpit.messages.kind.
 const KIND_LABEL: Record<string, string> = {
   kunde: "Neuer Kunde",
   freigabe: "Freigabe nötig",
@@ -28,12 +27,19 @@ const KIND_LABEL: Record<string, string> = {
   "mail-auswertung-fehler": "Mail nicht ausgewertet",
   "mail-auswertung-stau": "Mails werden nicht gelesen",
   "bewertungslink-fehlt": "Bewertungslink fehlt",
+  "radar-gestartet": "Audit gestartet",
+  "radar-fertig": "Audit fertig",
+  "radar-unvollstaendig": "Audit unvollständig",
+  "radar-fehlgeschlagen": "Audit fehlgeschlagen",
+  "radar-messung": "Messung fehlgeschlagen",
+  "radar-ohne-messwert": "Prüfungen ohne Messwert",
+  "radar-warnung": "Warnung des Audit-Agenten",
+  "sammler-zurueck": "Sammler wieder da",
   postfach: "Postfach",
   tagesueberblick: "Tagesüberblick",
   test: "Testnachricht",
 };
 
-/** Name of a message kind; empty for kinds this version of the app does not know yet. */
 export function kindLabel(kind: string): string {
   return KIND_LABEL[kind] ?? "";
 }

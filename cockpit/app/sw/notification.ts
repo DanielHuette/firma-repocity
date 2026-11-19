@@ -1,8 +1,3 @@
-// Everything the service worker decides without touching the browser: reading a push, building
-// the notification with its buttons, and the request that carries out a tapped button.
-// Context: imported by sw.ts and the unit tests. | Input: push payloads, notification data,
-// build-time server address. | Output: notification texts and options, the run_action request.
-
 import { messageActions, type MessageAction } from "../src/lib/actions";
 
 export type Priority = "info" | "wichtig" | "dringend";
@@ -21,7 +16,6 @@ export interface PushMessage {
   actions: PushAction[];
 }
 
-/** What a notification keeps for the moment it is tapped. */
 export interface NotificationData {
   id: string;
   link: string;
@@ -35,7 +29,6 @@ export interface ServerConfig {
   anonKey: string;
 }
 
-// The TypeScript library leaves out the buttons, which only Chromium-based browsers show.
 export interface ActionNotificationOptions extends NotificationOptions {
   actions?: PushAction[];
 }
@@ -43,7 +36,9 @@ export interface ActionNotificationOptions extends NotificationOptions {
 export const OFFLINE_TEXT = "Keine Verbindung zum Server. Öffne das Cockpit und schau nach, ob es geklappt hat.";
 export const FAILED_TEXT = "Das hat nicht geklappt. Öffne das Cockpit und versuch es dort noch mal.";
 
-const APP_LABEL: Record<string, string> = { crm: "CRM", marketing: "Marketing", trading: "Trading", system: "Cockpit" };
+const APP_LABEL: Record<string, string> = {
+  crm: "CRM", marketing: "Marketing", trading: "Trading", system: "Cockpit", radarauditor: "RadarAuditor",
+};
 const PRIORITIES: readonly Priority[] = ["info", "wichtig", "dringend"];
 const REQUEST_TIMEOUT_MS = 15000;
 
@@ -51,7 +46,6 @@ function text(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value : fallback;
 }
 
-/** Reads a decoded push payload; anything else becomes a general notice with the raw text. */
 export function parsePush(raw: unknown, fallbackText: string): PushMessage {
   if (typeof raw !== "object" || raw === null) {
     return { id: "", app: "system", kind: "", priority: "wichtig", title: "Neue Nachricht im Cockpit", body: fallbackText, link: "/", tag: "", token: "", actions: [] };
@@ -92,7 +86,6 @@ export function readData(data: unknown): NotificationData {
 
 export function actionRequest(config: ServerConfig, data: NotificationData, action: string): { url: string; init: RequestInit } {
   const headers: Record<string, string> = { apikey: config.anonKey, "Content-Profile": "cockpit", "Content-Type": "application/json" };
-  // Legacy anon keys are signed tokens the gateway also wants as bearer; new publishable keys are not.
   if (config.anonKey.startsWith("eyJ")) headers.Authorization = `Bearer ${config.anonKey}`;
   return {
     url: `${config.url}/rest/v1/rpc/run_action`,
@@ -107,7 +100,6 @@ async function answerText(response: Response): Promise<string> {
   return typeof sentence === "string" && sentence !== "" ? sentence : FAILED_TEXT;
 }
 
-/** Carries out a tapped button and returns the German sentence to show in its place. */
 export async function performAction(fetcher: typeof fetch, config: ServerConfig, data: NotificationData, action: string): Promise<string> {
   if (config.url === "" || config.anonKey === "" || data.id === "" || data.token === "") return FAILED_TEXT;
   const request = actionRequest(config, data, action);
@@ -124,7 +116,6 @@ export async function performAction(fetcher: typeof fetch, config: ServerConfig,
   }
 }
 
-/** Takes the place of the tapped notification; a tap on it opens the message's page. */
 export function resultNotification(data: NotificationData, sentence: string): { title: string; options: ActionNotificationOptions } {
   const kept: NotificationData = { ...data, token: "" };
   return {

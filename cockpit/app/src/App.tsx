@@ -1,7 +1,6 @@
-// Routes of the signed-in Cockpit; without a session only the sign-in page is shown.
 import { createContext } from "preact";
 import { useCallback, useContext, useEffect, useState } from "preact/hooks";
-import { LocationProvider, Route, Router } from "preact-iso";
+import { ErrorBoundary, LocationProvider, Route, Router, lazy, useLocation } from "preact-iso";
 import { listMessages, watchMessages } from "./api/cockpit";
 import type { Message } from "./api/types";
 import { Shell } from "./components/Shell";
@@ -11,17 +10,44 @@ import { usePasswordRecovery } from "./hooks/recovery";
 import { AdminContext, useAdminStatus } from "./hooks/role";
 import { useSession } from "./hooks/useSession";
 import { describeError } from "./lib/errors";
+import { istKommandozentrale } from "./lib/pfadregel";
 import { Assistent } from "./pages/Assistent";
+import { Auffangen } from "./pages/Kommandozentrale/Auffangen";
+import { RadarAuditor } from "./pages/RadarAuditor";
 import { Einstellungen } from "./pages/Einstellungen";
 import { SetPassword } from "./pages/SetPassword";
 import { SignIn } from "./pages/SignIn";
 import { Zentrale } from "./pages/Zentrale";
+
+const Kommandozentrale = lazy(() => import("./pages/Kommandozentrale/Kommandozentrale").then((modul) => modul.Kommandozentrale));
 
 function NotFound() {
   return <p class="muted">Diese Seite gibt es nicht. <a href="/">Zur Zentrale</a></p>;
 }
 
 export function App() {
+  return (
+    <LocationProvider>
+      <Weiche />
+    </LocationProvider>
+  );
+}
+
+function Weiche() {
+  const { path } = useLocation();
+  if (istKommandozentrale(path)) {
+    return (
+      <Auffangen>
+        <ErrorBoundary>
+          <Kommandozentrale />
+        </ErrorBoundary>
+      </Auffangen>
+    );
+  }
+  return <Cockpit />;
+}
+
+function Cockpit() {
   const session = useSession();
   return (
     <>
@@ -45,9 +71,7 @@ function Inhalt({ session }: { session: ReturnType<typeof useSession> }) {
   if (recovery.pending) return <SetPassword onDone={recovery.finish} />;
   return (
     <AdminContext.Provider value={admin}>
-      <LocationProvider>
-        <Arbeitsbereich email={session.user.email ?? ""} admin={admin} />
-      </LocationProvider>
+      <Arbeitsbereich email={session.user.email ?? ""} admin={admin} />
     </AdminContext.Provider>
   );
 }
@@ -64,7 +88,6 @@ export function useFeedContext(): Feed {
   return useContext(FeedContext);
 }
 
-// The feed lives here so the unread badge in the sidebar and the page share one live list.
 function useFeed(enabled: boolean): Feed {
   const [messages, setMessages] = useState<Message[] | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +112,6 @@ function Arbeitsbereich({ email, admin }: { email: string; admin: boolean | unde
   const feed = useFeed(admin === true);
   const unread = feed.messages?.filter((message) => message.read_at === null).length ?? 0;
   useEffect(() => {
-    // The number on the installed app icon follows the unread messages.
     if (!("setAppBadge" in navigator)) return;
     if (unread > 0) void navigator.setAppBadge(unread).catch(() => undefined);
     else void navigator.clearAppBadge().catch(() => undefined);
@@ -100,6 +122,7 @@ function Arbeitsbereich({ email, admin }: { email: string; admin: boolean | unde
         {admin === false ? null : (
           <Router>
             <Route path="/" component={Zentrale} />
+            <Route path="/radarauditor" component={RadarAuditor} />
             <Route path="/assistent" component={Assistent} />
             <Route path="/einstellungen" component={() => <Einstellungen email={email} />} />
             <Route default component={NotFound} />

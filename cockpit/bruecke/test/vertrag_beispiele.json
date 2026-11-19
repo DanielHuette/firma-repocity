@@ -1,0 +1,316 @@
+{
+  "zustand": {
+    "typ": "zustand",
+    "sitzungen": [
+      {
+        "id": "kennung-1",
+        "ordner": "/beispiel/vault",
+        "titel": "vault",
+        "claudeSitzung": "0b9e5c1a-2f4d-4c6e-9a7b-3d1e2f4a5b6c",
+        "stand": "arbeitet",
+        "modell": "ersatz-modell",
+        "kontextProzent": 1.234,
+        "kontextVeraltet": false,
+        "eingabeTokens": 1234,
+        "schwelleUeberschritten": false,
+        "agenten": [
+          {
+            "id": "haupt",
+            "eltern": null,
+            "name": "Hauptsitzung",
+            "typ": "haupt",
+            "stand": "laeuft",
+            "werkzeug": null,
+            "aufrufe": 0,
+            "seit": 1800000000000,
+            "skills": [],
+            "fortschritt": null
+          }
+        ],
+        "wartet": [],
+        "hinweise": [],
+        "aufwand": null,
+        "skills": [
+          "test-skill"
+        ],
+        "plugins": [],
+        "konnektoren": [],
+        "erlaubnis": "default",
+        "erlaubnisBestaetigt": true,
+        "ausgabestil": null,
+        "schnell": false,
+        "anbieter": "abo",
+        "modellWahl": null,
+        "kostenUsd": null,
+        "neustartAusstehend": false,
+        "pausiert": false,
+        "pruefung": false,
+        "prozess": "laeuft",
+        "hinweis": null
+      }
+    ],
+    "steuert": {
+      "name": "PC",
+      "du": true
+    }
+  },
+  "chat_neu": {
+    "typ": "chat_neu",
+    "sitzung": "kennung-1",
+    "eintrag": {
+      "id": "msg_ersatz_1:0",
+      "art": "claude",
+      "zeit": 1800000000000,
+      "text": ""
+    }
+  },
+  "bestand": {
+    "typ": "bestand",
+    "skills": [
+      {
+        "kennung": "test-skill",
+        "name": "test-skill",
+        "beschreibung": "",
+        "bereiche": [
+          "ohne Bereich"
+        ],
+        "sammlung": null,
+        "quelle": "persoenlich",
+        "immerAktiv": false
+      }
+    ],
+    "plugins": [],
+    "konnektoren": [
+      {
+        "kennung": "claude.ai Claude Docs",
+        "name": "claude.ai Claude Docs",
+        "art": "claudeai",
+        "bereiche": [
+          "ohne Bereich"
+        ],
+        "jeSitzungSchaltbar": false
+      },
+      {
+        "kennung": "claude.ai Cloudflare Developer Platform",
+        "name": "claude.ai Cloudflare Developer Platform",
+        "art": "claudeai",
+        "bereiche": [
+          "ohne Bereich"
+        ],
+        "jeSitzungSchaltbar": false
+      },
+      {
+        "kennung": "claude.ai Figma",
+        "name": "claude.ai Figma",
+        "art": "claudeai",
+        "bereiche": [
+          "ohne Bereich"
+        ],
+        "jeSitzungSchaltbar": false
+      },
+      {
+        "kennung": "claude.ai Gmail",
+        "name": "claude.ai Gmail",
+        "art": "claudeai",
+        "bereiche": [
+          "ohne Bereich"
+        ],
+        "jeSitzungSchaltbar": false
+      },
+      {
+        "kennung": "claude.ai Google Calendar",
+        "name": "claude.ai Google Calendar",
+        "art": "claudeai",
+        "bereiche": [
+          "ohne Bereich"
+        ],
+        "jeSitzungSchaltbar": false
+      },
+      {
+        "kennung": "claude.ai Google Drive",
+        "name": "claude.ai Google Drive",
+        "art": "claudeai",
+        "bereiche": [
+          "ohne Bereich"
+        ],
+        "jeSitzungSchaltbar": false
+      },
+      {
+        "kennung": "claude.ai Supabase",
+        "name": "claude.ai Supabase",
+        "art": "claudeai",
+        "bereiche": [
+          "ohne Bereich"
+        ],
+        "jeSitzungSchaltbar": false
+      },
+      {
+        "kennung": "playwright",
+        "name": "playwright",
+        "art": "mcp",
+        "bereiche": [
+          "ohne Bereich"
+        ],
+        "jeSitzungSchaltbar": true
+      },
+      {
+        "kennung": "playwright-chrome",
+        "name": "playwright-chrome",
+        "art": "mcp",
+        "bereiche": [
+          "ohne Bereich"
+        ],
+        "jeSitzungSchaltbar": true
+      },
+      {
+        "kennung": "windows-mcp",
+        "name": "windows-mcp",
+        "art": "mcp",
+        "bereiche": [
+          "ohne Bereich"
+        ],
+        "jeSitzungSchaltbar": true
+      }
+    ],
+    "bibliothek": {
+      "skills": [],
+      "plugins": [],
+      "konnektoren": []
+    },
+    "favoriten": {
+      "skills": [
+        "caveman",
+        "grill-me",
+        "senior-engineering-standard"
+      ],
+      "plugins": [],
+      "konnektoren": []
+    }
+  },
+  "optionen": {
+    "typ": "optionen",
+    "erlaubnis": [
+      "default",
+      "acceptEdits",
+      "plan",
+      "auto"
+    ],
+    "ausgabestile": [
+      "default",
+      "Proactive",
+      "Concise",
+      "Explanatory",
+      "Learning"
+    ],
+    "modelle": {
+      "claude": [
+        {
+          "wert": "default",
+          "text": "Standard"
+        },
+        {
+          "wert": "opus",
+          "text": "Opus"
+        },
+        {
+          "wert": "opus[1m]",
+          "text": "Opus mit 1 Mio. Kontext"
+        },
+        {
+          "wert": "sonnet",
+          "text": "Sonnet"
+        },
+        {
+          "wert": "sonnet[1m]",
+          "text": "Sonnet mit 1 Mio. Kontext"
+        },
+        {
+          "wert": "haiku",
+          "text": "Haiku"
+        },
+        {
+          "wert": "opusplan",
+          "text": "Opus im Planmodus, sonst Sonnet"
+        }
+      ],
+      "openrouter": null,
+      "openrouterGrund": "OpenRouter ist nicht eingerichtet"
+    },
+    "vorgaben": {
+      "modell": "default",
+      "aufwand": "auto",
+      "ordner": null,
+      "ausgabestil": null,
+      "erlaubnis": "default",
+      "skills": [],
+      "plugins": [],
+      "konnektoren": [
+        "playwright",
+        "playwright-chrome",
+        "windows-mcp"
+      ]
+    },
+    "linkGesperrt": null
+  },
+  "projekte": {
+    "typ": "projekte",
+    "liste": [
+      {
+        "ordner": "/beispiel/vault",
+        "name": "vault",
+        "zuletzt": 1800000000000,
+        "status": null
+      }
+    ]
+  },
+  "hinzugefuegt": {
+    "typ": "hinzugefuegt",
+    "art": "skill",
+    "weg": "bibliothek",
+    "ok": false,
+    "text": "fehlt steht nicht in der Bibliothek.",
+    "einrichtung": null
+  },
+  "fehler": {
+    "typ": "fehler",
+    "text": "Diese Sitzung ist nicht pausiert."
+  },
+  "einstellungen": {
+    "typ": "einstellungen",
+    "schwelleVerdichten": 200000,
+    "claudeVersion": "9.9.9 (Test)"
+  },
+  "ordner": {
+    "typ": "ordner",
+    "liste": [
+      {
+        "pfad": "/beispiel/vault",
+        "name": "vault"
+      }
+    ]
+  },
+  "chat": {
+    "typ": "chat",
+    "sitzung": "kennung-1",
+    "eintraege": [
+      {
+        "id": "kennung-2",
+        "art": "system",
+        "zeit": 1800000000000,
+        "text": "SITZUNG kennung-1\nORDNER /beispiel/vault\nARGUMENTE [\"-p\",\"--input-format\",\"stream-json\",\"--output-format\",\"stream-json\",\"--verbose\",\"--include-partial-messages\",\"--permission-prompt-tool\",\"stdio\"]"
+      },
+      {
+        "id": "kennung-3",
+        "art": "du",
+        "zeit": 1800000000000,
+        "text": "hallo"
+      },
+      {
+        "id": "msg_ersatz_1:0",
+        "art": "claude",
+        "zeit": 1800000000000,
+        "text": "ECHO Für diese Sitzung gilt zusätzlich: lade mit dem Skill-Werkzeug den Skill test-skill.\n\nhallo"
+      }
+    ]
+  }
+}

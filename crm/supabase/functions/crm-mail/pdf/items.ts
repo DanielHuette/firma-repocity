@@ -1,5 +1,3 @@
-// Item table and totals shared by quote and invoice: amounts per line, the net amount split by
-// value added tax rate, and the small business note required by § 34a UStDV.
 import type { Block, Column, TotalRow } from "./model.ts";
 import { cents, euro, lineCents, quantityDe, vatCents } from "./text.ts";
 
@@ -9,6 +7,9 @@ export interface Item {
   position: number;
   title: string;
   description: string;
+  scope?: string;
+  billing?: string;
+  vat_note?: string;
   quantity: number;
   unit: string;
   unit_price_net: number;
@@ -17,16 +18,18 @@ export interface Item {
 
 export interface Totals { net: number; vat: number; gross: number }
 
+const BILLING_LABEL: Record<string, string> = { once: "Einmalig", monthly: "Monatlich", hourly: "Je Stunde", piece: "Je Stück" };
+
 function toNumber(value: unknown): number {
   const number = typeof value === "number" ? value : Number(value);
   return Number.isFinite(number) ? number : 0;
 }
 
-/** Items as the database returns them, sorted by position. */
 export function toItems(rows: unknown): Item[] {
   const list = Array.isArray(rows) ? rows as Record<string, unknown>[] : [];
   return list.map((row) => ({
     position: toNumber(row.position), title: String(row.title ?? ""), description: String(row.description ?? ""),
+    scope: String(row.scope ?? ""), billing: String(row.billing ?? ""), vat_note: String(row.vat_note ?? ""),
     quantity: toNumber(row.quantity), unit: String(row.unit ?? ""), unit_price_net: toNumber(row.unit_price_net), vat_rate: toNumber(row.vat_rate),
   })).sort((a, b) => a.position - b.position);
 }
@@ -43,15 +46,21 @@ function columns(withRate: boolean): Column[] {
   ];
 }
 
+export function itemText(item: Item): string {
+  const billing = BILLING_LABEL[item.billing ?? ""];
+  const vat = item.vat_note ?? "";
+  return [item.title, item.description, item.scope ?? "", billing === undefined ? "" : `Preisart: ${billing}`, vat === "" ? "" : `Mehrwertsteuer: ${vat}`]
+    .filter((part) => part.trim() !== "").join("\n");
+}
+
 export function itemTable(items: Item[], withRate: boolean): Block {
   const rows = items.map((item, index) => [
-    String(index + 1), item.description === "" ? item.title : `${item.title}\n${item.description}`, `${quantityDe(item.quantity)} ${item.unit}`.trim(),
+    String(index + 1), itemText(item), `${quantityDe(item.quantity)} ${item.unit}`.trim(),
     ...(withRate ? [rateLabel(item.vat_rate)] : []), euro(cents(item.unit_price_net)), euro(lineCents(item.quantity, item.unit_price_net)),
   ]);
   return { kind: "table", columns: columns(withRate), rows };
 }
 
-/** Net amount per rate in cents, rates ascending; the rounding matches crm.document_totals. */
 export function netByRate(items: Item[]): [number, number][] {
   const sums = new Map<number, number>();
   for (const item of items) sums.set(item.vat_rate, (sums.get(item.vat_rate) ?? 0) + lineCents(item.quantity, item.unit_price_net));

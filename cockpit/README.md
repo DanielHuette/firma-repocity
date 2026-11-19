@@ -22,6 +22,34 @@
 
 The server address and the public key reach the service worker at build time through `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, the same variables the app uses.
 
+## RadarAuditor
+
+The page `/radarauditor` and the card on the home page read the RadarAuditor tables with the signed-in session (schema `public`, read for every signed-in user); nothing is copied.
+
+| Shows | Source |
+|---|---|
+| Collector online or offline, last sign of life, reason when the analysis is blocked | `settings.worker_heartbeat`; online while younger than 2 minutes, like the RadarAuditor app |
+| Running and finished audits per customer, status, points | `audits`, newest 40 |
+| Verdict of the audit manager (Fertig, Unvollständig, Fehlgeschlagen) and failed measurements | `audit_events` (kind `manager` with label `Audit-Manager: Ergebnis`, kind `route` with result `fehlgeschlagen`) |
+| Cost estimate and actual cost per audit, with the estimate check | `audit_estimates`, `audit_costs`, `audits.estimate_status` |
+| Cost per paid service this month against its limit | `source_usage`, limits from `settings.sources` (defaults 25, 10, 50 and 10 euros) |
+| Search terms per customer, local and nationwide | `keywords.scope` |
+| Link to the evaluation | `https://app.radarauditor.speedofthespirit.dev/auswertung/<audit>` |
+| Start of an audit | `queue_field_audit(customer, [])`, the same call as the RadarAuditor app; two taps; blocked while a fresh heartbeat says the analysis is not available |
+
+Notices from RadarAuditor reach the message centre and the phone through `supabase/migrations/009_radarauditor.sql`, in addition to ntfy. The triggers sit on the RadarAuditor tables, so the worker needs no change.
+
+| Notice (kind) | Trigger | Priority |
+|---|---|---|
+| Audit started (`radar-gestartet`) | first attempt of the collect job | info |
+| Audit done (`radar-fertig`) | verdict `gemessen`, with points | info |
+| Audit incomplete (`radar-unvollstaendig`) | verdict `ausgesetzt` | wichtig |
+| Audit failed (`radar-fehlgeschlagen`) | verdict `fehlgeschlagen` | dringend |
+| Measurement failed (`radar-messung`) | failed measuring route, once per route and reason and hour; stage 0 and 1 stop the audit | dringend for stage 0 and 1, else wichtig |
+| Checks without value (`radar-ohne-messwert`) | one summary per audit and set of checks and day | info |
+| Collector back (`sammler-zurueck`) | heartbeat after a gap of more than 3 minutes | info |
+
+Monthly audits (a row in `crm.audit_runs`) already have notices of the CRM, so for them "started" and "done" are left out. Agent approval requests arrive as the CRM notice "Freigabe nötig" (`crm.approvals`, see `10_Bibliothek/11_Skills/09_arbeitsweise_agenten/freigabe-vor-versand`).
 ## Assistant
 **Context:** page `/assistent`, one tap away: microphone button in the top bar on the phone, "Assistent" in the sidebar, and a shortcut on a long press of the installed app icon. | **Input:** a typed request or a voice recording. | **Output:** a row in `crm.assistant_requests`; the server worker answers with a notice of kind `assistent`.
 
@@ -43,5 +71,6 @@ The server address and the public key reach the service worker at build time thr
 | App and service worker | `cd app && npm ci && npm run check && npm test && npm run build` |
 | Edge Function | `deno check supabase/functions/cockpit-push/index.ts deploy/cockpit-push.ts` and `deno test --allow-read supabase/functions/cockpit-push deploy` |
 | Deploy file after a change of the function | `deno run --allow-read --allow-write deploy/bundle.ts` |
+| Database triggers of RadarAuditor notices | `powershell -File tests/sql/run.ps1` (throwaway PostgreSQL in Docker, applies all migrations in live order and `tests/sql/radarauditor_test.sql`) |
 
 Deploy the app: `npx wrangler@4 pages deploy dist --project-name repocity-cockpit --branch main`.

@@ -1,16 +1,15 @@
-// Frame of every signed-in page: a sidebar on the left with mark, wordmark, the Cockpit's own pages
-// and the RepoCity apps below it. It stays open until Daniel folds it to an icon rail; the choice
-// is remembered per browser. On small screens the sidebar becomes a drawer behind a menu button.
 import type { ComponentChildren, JSX, RefObject } from "preact";
 import { useLocation } from "preact-iso";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { Mark, Wordmark } from "./Logo";
 
-type IconName = "zentrale" | "assistent" | "kunden" | "einstellungen" | "radar" | "planer";
+type IconName = "zentrale" | "assistent" | "kunden" | "einstellungen" | "radar" | "planer" | "kommandozentrale";
 
 const LINKS: { href: string; label: string; icon: IconName; match: string[] }[] = [
   { href: "/", label: "Zentrale", icon: "zentrale", match: ["/"] },
+  { href: "/radarauditor", label: "RadarAuditor", icon: "radar", match: ["/radarauditor"] },
   { href: "/assistent", label: "Assistent", icon: "assistent", match: ["/assistent"] },
+  { href: "/kommandozentrale", label: "Kommandozentrale", icon: "kommandozentrale", match: ["/kommandozentrale"] },
   { href: "/einstellungen", label: "Einstellungen", icon: "einstellungen", match: ["/einstellungen"] },
 ];
 
@@ -20,7 +19,6 @@ interface External {
   icon: IconName;
 }
 
-/** Each opens in its own window. Apps run the company, products are what RepoCity sells. */
 const GROUPS: { title: string; items: External[] }[] = [
   {
     title: "Apps",
@@ -29,7 +27,6 @@ const GROUPS: { title: string; items: External[] }[] = [
       { href: "https://app.agenticmarketing.speedofthespirit.dev/planer", label: "Marketing", icon: "planer" },
     ],
   },
-  { title: "Produkte", items: [{ href: "https://app.radarauditor.speedofthespirit.dev/", label: "RadarAuditor", icon: "radar" }] },
 ];
 
 const PATHS: Record<IconName, JSX.Element> = {
@@ -37,6 +34,7 @@ const PATHS: Record<IconName, JSX.Element> = {
   radar: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><path d="M12 12l6.4-6.4" /><circle cx="12" cy="12" r="1.2" /></>,
   assistent: <><rect x="9" y="3" width="6" height="11.5" rx="3" /><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M8.5 21h7" /></>,
   zentrale: <><path d="M4 5.5h16v10H9l-5 4z" /><path d="M8 9.5h8M8 12.5h5" /></>,
+  kommandozentrale: <><rect x="3" y="4.5" width="18" height="15" rx="2" /><path d="M7 10l3 2.5L7 15M12.5 15h4.5" /></>,
   kunden: <><circle cx="9" cy="8" r="3.4" /><path d="M2.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6" /><circle cx="17" cy="9" r="2.6" /><path d="M16.5 14.6c2.6.1 4.4 1.8 5 4.6" /></>,
   einstellungen: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></>,
 };
@@ -60,12 +58,11 @@ function useFolded(): [boolean, () => void] {
   const toggle = () => {
     const next = !folded;
     setFolded(next);
-    try { localStorage.setItem(STORAGE_KEY, next ? "1" : "0"); } catch { /* the choice just is not remembered */ }
+    try { localStorage.setItem(STORAGE_KEY, next ? "1" : "0"); } catch { return; }
   };
   return [folded, toggle];
 }
 
-// The gold pill springs to the active section (measured after each navigation and fold)
 function usePill(nav: RefObject<HTMLElement>, deps: readonly unknown[]): { y: number; h: number } | null {
   const [pill, setPill] = useState<{ y: number; h: number } | null>(null);
   useLayoutEffect(() => {

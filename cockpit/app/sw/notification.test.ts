@@ -37,7 +37,6 @@ describe("parsePush", () => {
     expect(message.priority).toBe("wichtig");
   });
 
-  // The browser shows as many as it can (Chromium two); the order puts the most important first.
   it("keeps at most three well-formed actions in their order", () => {
     const actions = [
       { action: "approve", title: "Senden" }, { action: "x" }, { action: "reject", title: "Nicht senden" }, { action: "more", title: "Mehr" },
@@ -61,6 +60,11 @@ describe("notificationFor", () => {
     expect(options.actions).toEqual([{ action: "start_audit", title: "Prüfung auslösen" }]);
     expect(options.data).toEqual({ id: "m-1", link: PUSH.link, tag: "pruefung-7", token: "t-1", title: PUSH.title });
     expect(options.body).toBe("CRM · Oktober steht an.");
+  });
+
+  it("names RadarAuditor as the sender of its messages", () => {
+    const message = parsePush({ ...PUSH, app: "radarauditor", kind: "radar-fertig", body: "62,5 von 100 Punkten." }, "");
+    expect(notificationFor(message).options.body).toBe("RadarAuditor · 62,5 von 100 Punkten.");
   });
 
   it("marks urgent messages and keeps them on screen", () => {

@@ -1,0 +1,14 @@
+{
+  "portOberflaeche": 8787,
+  "portMeldeeingang": 8788,
+  "vault": "/srv/AI_Enterprise_Zentrale",
+  "erlaubteOrdner": ["/srv/AI_Enterprise_Zentrale"],
+  "claudeBefehl": ["claude"],
+  "datenordner": "/srv/repocity_bruecke/daten",
+  "geheimnis": "/home/repocity/.config/repocity_bruecke/geheimnis",
+  "erlaubteHerkunft": "http://127.0.0.1:8787",
+  "schwelleVerdichten": 200000,
+  "claudeMem": "http://127.0.0.1:37777",
+  "qmdBefehl": ["qmd"],
+  "openrouterSchluessel": "/home/repocity/.config/repocity_bruecke/openrouter_schluessel"
+}

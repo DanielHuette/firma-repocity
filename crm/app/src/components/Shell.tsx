@@ -1,18 +1,16 @@
-// Frame of every signed-in page: a sidebar on the left with mark, wordmark and the sections Daniel
-// works in. It stays open until he folds it to an icon rail; the choice is remembered per browser.
-// On small screens the sidebar becomes a drawer behind a menu button.
 import type { ComponentChildren, JSX, RefObject } from "preact";
 import { useLocation } from "preact-iso";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { Mark, Wordmark } from "./Logo";
 
-type IconName = "heute" | "kalender" | "kunden" | "verkauf" | "rechnungen" | "finanzen" | "service" | "freigaben" | "einstellungen";
+type IconName = "heute" | "kalender" | "kunden" | "verkauf" | "angebot" | "rechnungen" | "finanzen" | "service" | "freigaben" | "einstellungen";
 
 const LINKS: { href: string; label: string; icon: IconName; match: string[] }[] = [
   { href: "/", label: "Heute", icon: "heute", match: ["/"] },
   { href: "/kalender", label: "Kalender", icon: "kalender", match: ["/kalender"] },
   { href: "/kunden", label: "Kunden", icon: "kunden", match: ["/kunden", "/kunde/"] },
   { href: "/verkauf", label: "Verkauf", icon: "verkauf", match: ["/verkauf", "/angebot/"] },
+  { href: "/leistungen", label: "Angebot", icon: "angebot", match: ["/leistungen"] },
   { href: "/rechnungen", label: "Rechnungen", icon: "rechnungen", match: ["/rechnungen", "/rechnung/"] },
   { href: "/finanzen", label: "Finanzen", icon: "finanzen", match: ["/finanzen"] },
   { href: "/service", label: "Service", icon: "service", match: ["/service"] },
@@ -25,6 +23,7 @@ const PATHS: Record<IconName, JSX.Element> = {
   kalender: <><rect x="3" y="4.5" width="18" height="16.5" rx="2.2" /><path d="M3 9.5h18M8 2.5v4M16 2.5v4M7.5 13.5h2.5M14 13.5h2.5M7.5 17h2.5" /></>,
   kunden: <><circle cx="9" cy="8" r="3.4" /><path d="M2.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6" /><circle cx="17" cy="9" r="2.6" /><path d="M16.5 14.6c2.6.1 4.4 1.8 5 4.6" /></>,
   verkauf: <><path d="M3 17l5.5-5.5 4 4L21 7" /><path d="M15 7h6v6" /></>,
+  angebot: <><path d="M3 12.4V4.5a1.5 1.5 0 0 1 1.5-1.5h7.9a1.5 1.5 0 0 1 1.1.4l7.1 7.1a1.5 1.5 0 0 1 0 2.1l-7.9 7.9a1.5 1.5 0 0 1-2.1 0l-7.1-7.1a1.5 1.5 0 0 1-.5-1z" /><circle cx="7.7" cy="7.7" r="1.3" /></>,
   rechnungen: <><path d="M6 2.8h9l4 4V21.2H6z" /><path d="M15 2.8v4h4M9 11h7M9 14.5h7M9 18h4" /></>,
   finanzen: <><rect x="2.8" y="5.5" width="18.4" height="13" rx="2" /><path d="M2.8 9.5h18.4M6.5 14.5h4" /></>,
   service: <><path d="M4 14v-2a8 8 0 0 1 16 0v2" /><rect x="2.8" y="13" width="4" height="6" rx="1.4" /><rect x="17.2" y="13" width="4" height="6" rx="1.4" /><path d="M19.2 19c0 1.5-1.6 2.4-4.2 2.4" /></>,
@@ -51,12 +50,11 @@ function useFolded(): [boolean, () => void] {
   const toggle = () => {
     const next = !folded;
     setFolded(next);
-    try { localStorage.setItem(STORAGE_KEY, next ? "1" : "0"); } catch { /* the choice just is not remembered */ }
+    try { localStorage.setItem(STORAGE_KEY, next ? "1" : "0"); } catch { return; }
   };
   return [folded, toggle];
 }
 
-// The gold pill springs to the active section, measured after each navigation and fold.
 function usePill(nav: RefObject<HTMLElement>, deps: unknown[]): { y: number; h: number } | null {
   const [pill, setPill] = useState<{ y: number; h: number } | null>(null);
   useLayoutEffect(() => {

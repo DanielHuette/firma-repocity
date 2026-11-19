@@ -1,5 +1,3 @@
-// Every read and write of the app. Rules that must hold no matter who writes (numbering, totals,
-// immutability of finalised invoices) live in the database; this module only calls them.
 import { transcriptLines } from "../lib/calls";
 import { QueryError } from "../lib/errors";
 import { check, unwrap } from "./result";
@@ -11,8 +9,6 @@ import type {
 } from "./types";
 
 const WITH_CUSTOMER = "*, customer:customers(id, name)";
-
-// Session and role
 
 export async function isAdmin(): Promise<boolean> {
   return unwrap("Rolle prüfen", await supabase.schema("public").rpc("is_admin")) === true;
@@ -32,18 +28,13 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 }
 
-// Overview
-
 export async function loadOverview(): Promise<Overview> {
   return unwrap("Überblick laden", await supabase.rpc("today_overview")) as Overview;
 }
 
-/** Per channel the inquiries and new customers of the period and the payments received in it. */
 export async function channelReport(from: string, to: string): Promise<ChannelReportRow[]> {
   return unwrap("Herkunft laden", await supabase.rpc("channel_report", { p_from: from, p_to: to })) as ChannelReportRow[];
 }
-
-// Settings
 
 export async function loadSettings(): Promise<Settings> {
   return unwrap("Einstellungen laden", await supabase.from("settings").select("*").eq("id", 1).single<Settings>());
@@ -52,8 +43,6 @@ export async function loadSettings(): Promise<Settings> {
 export async function saveSettings(settings: Partial<Settings>): Promise<void> {
   check("Einstellungen speichern", await supabase.from("settings").update(settings).eq("id", 1));
 }
-
-// Customers
 
 export async function listCustomers(search = ""): Promise<Customer[]> {
   let query = supabase.from("customers").select("*").order("name");
@@ -124,8 +113,6 @@ export async function addActivity(customerId: string, kind: ActivityKind, body: 
   check("Eintrag speichern", await supabase.from("activities").insert({ customer_id: customerId, kind, body: body.trim() }));
 }
 
-// Inquiries and deals
-
 export async function listInquiries(): Promise<Inquiry[]> {
   return unwrap("Anfragen laden", await supabase.from("inquiries").select(WITH_CUSTOMER).order("created_at", { ascending: false }).limit(300).overrideTypes<Inquiry[], { merge: false }>());
 }
@@ -159,8 +146,6 @@ export async function updateDeal(id: string, changes: Partial<Pick<Deal, "stage"
 
 export const DEAL_FLOW: DealStage[] = ["new", "meeting", "quote", "won"];
 
-// Products and subscriptions
-
 export async function listProducts(includeInactive = false): Promise<Product[]> {
   let query = supabase.from("products").select("*").order("name");
   if (!includeInactive) query = query.eq("active", true);
@@ -187,8 +172,6 @@ export async function setSubscriptionActive(id: string, active: boolean): Promis
   check("Abo ändern", await supabase.from("subscriptions").update({ active }).eq("id", id));
 }
 
-// Quotes
-
 export async function listQuotes(): Promise<Quote[]> {
   return unwrap("Angebote laden", await supabase.from("quotes").select(WITH_CUSTOMER).order("created_at", { ascending: false }).limit(300).overrideTypes<Quote[], { merge: false }>());
 }
@@ -210,7 +193,6 @@ export async function saveQuote(id: string, fields: Pick<Quote, "intro" | "outro
   await replaceItems("quote_items", "quote_id", id, items);
 }
 
-
 async function replaceItems(table: "quote_items" | "invoice_items", key: "quote_id" | "invoice_id", id: string, items: LineItem[]): Promise<void> {
   check("Positionen speichern", await supabase.from(table).delete().eq(key, id));
   if (items.length === 0) return;
@@ -220,6 +202,7 @@ async function replaceItems(table: "quote_items" | "invoice_items", key: "quote_
     product_id: item.product_id,
     title: item.title.trim(),
     description: item.description.trim(),
+    ...(table === "quote_items" ? { scope: (item.scope ?? "").trim(), billing: item.billing ?? null, vat_note: (item.vat_note ?? "").trim() } : {}),
     quantity: item.quantity,
     unit: item.unit,
     unit_price_net: item.unit_price_net,
@@ -227,8 +210,6 @@ async function replaceItems(table: "quote_items" | "invoice_items", key: "quote_
   }));
   check("Positionen speichern", await supabase.from(table).insert(rows));
 }
-
-// Orders
 
 export async function listOrders(): Promise<Order[]> {
   return unwrap("Aufträge laden", await supabase.from("orders").select(WITH_CUSTOMER).order("created_at", { ascending: false }).limit(300).overrideTypes<Order[], { merge: false }>());
@@ -239,15 +220,11 @@ export async function setOrderStatus(id: string, status: OrderStatus): Promise<v
   check("Auftrag ändern", await supabase.from("orders").update({ status, ...done }).eq("id", id));
 }
 
-/** The draft of the one-off items, or null when the order holds only monthly items. */
 export async function invoiceFromOrder(orderId: string): Promise<Invoice | null> {
   const result = await supabase.rpc("invoice_from_order", { p_order: orderId }).maybeSingle<Invoice>();
   check("Rechnung anlegen", result);
-  // A function that returns a null row arrives either as null or as a row of nulls.
   return result.data === null || (result.data.id as string | null) === null ? null : result.data;
 }
-
-// Invoices
 
 export async function listInvoices(): Promise<Invoice[]> {
   return unwrap("Rechnungen laden", await supabase.from("invoices").select(WITH_CUSTOMER).order("created_at", { ascending: false }).limit(500).overrideTypes<Invoice[], { merge: false }>());
@@ -295,8 +272,6 @@ export async function runDunning(): Promise<number> {
   return unwrap("Mahnlauf", await supabase.rpc("run_dunning")) as number;
 }
 
-// Approvals, tasks, tickets
-
 export async function listApprovals(onlyPending: boolean): Promise<Approval[]> {
   let query = supabase.from("approvals").select(WITH_CUSTOMER).order("created_at", { ascending: false }).limit(200);
   if (onlyPending) query = query.eq("status", "pending");
@@ -335,14 +310,10 @@ export async function setTicketStatus(id: string, status: TicketStatus): Promise
   if (status === "solved") check("Aufgabe erledigen", await supabase.from("tasks").update({ done: true, done_at: solved }).eq("ticket_id", id).eq("done", false));
 }
 
-// Export for the tax adviser
-
 export async function invoicesForPeriod(from: string, to: string): Promise<Invoice[]> {
   return unwrap("Rechnungen laden", await supabase.from("invoices").select(WITH_CUSTOMER)
     .neq("status", "draft").gte("issue_date", from).lte("issue_date", to).order("number").overrideTypes<Invoice[], { merge: false }>());
 }
-
-// Customer file: overview, mails, documents, contracts
 
 export async function loadCustomerOverview(id: string): Promise<CustomerOverview> {
   return unwrap("Überblick laden", await supabase.rpc("customer_overview", { p_customer: id })) as CustomerOverview;
@@ -417,8 +388,6 @@ export async function dismissCustomer(id: string): Promise<void> {
   check("Kunde entfernen", await supabase.rpc("dismiss_customer", { p_customer: id }));
 }
 
-// Calls of the phone assistant
-
 const CALL_COLUMNS = "id, customer_id, caller_number, started_at, ended_at, transcript, summary, outcome";
 
 function toCall(row: CallRow): Call {
@@ -431,14 +400,11 @@ export async function listCalls(customerId: string): Promise<Call[]> {
   return rows.map(toCall);
 }
 
-/** Every call since the given instant, also those of callers the CRM does not know yet. */
 export async function listCallsSince(since: string): Promise<Call[]> {
   const rows = unwrap("Anrufe laden", await supabase.from("calls").select(`${CALL_COLUMNS}, customer:customers(id, name)`)
     .gte("started_at", since).order("started_at", { ascending: false }).limit(100).overrideTypes<CallRow[], { merge: false }>());
   return rows.map(toCall);
 }
-
-// Unknown senders and the mailbox
 
 export async function listMailReview(): Promise<MailReview[]> {
   return unwrap("Unbekannte Absender laden", await supabase.from("mail_review").select("*").eq("status", "open")

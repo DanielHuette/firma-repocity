@@ -22,6 +22,34 @@
 
 Serveradresse und öffentlicher Schlüssel kommen beim Bauen über `VITE_SUPABASE_URL` und `VITE_SUPABASE_ANON_KEY` in den Service Worker, dieselben Variablen wie für die App.
 
+## RadarAuditor
+
+Die Seite `/radarauditor` und die Karte in der Zentrale lesen die Tabellen von RadarAuditor mit der angemeldeten Sitzung (Schema `public`, Lesen für jeden Angemeldeten); es wird nichts kopiert.
+
+| Zeigt | Quelle |
+|---|---|
+| Sammler online oder offline, letztes Lebenszeichen, Grund, wenn die Auswertung gesperrt ist | `settings.worker_heartbeat`; online, solange jünger als 2 Minuten, wie in der RadarAuditor-App |
+| Laufende und fertige Audits je Kunde, Stand, Punkte | `audits`, die neuesten 40 |
+| Urteil des Audit-Managers (Fertig, Unvollständig, Fehlgeschlagen) und fehlgeschlagene Messungen | `audit_events` (Art `manager` mit Bezeichnung `Audit-Manager: Ergebnis`, Art `route` mit Ergebnis `fehlgeschlagen`) |
+| Kostenvoranschlag und tatsächliche Kosten je Audit, mit Prüfung des Voranschlags | `audit_estimates`, `audit_costs`, `audits.estimate_status` |
+| Kosten je bezahltem Dienst im Monat gegen sein Limit | `source_usage`, Limits aus `settings.sources` (Standard 25, 10, 50 und 10 Euro) |
+| Suchbegriffe je Kunde, vor Ort und bundesweit | `keywords.scope` |
+| Link zur Auswertung | `https://app.radarauditor.speedofthespirit.dev/auswertung/<Audit>` |
+| Start eines Audits | `queue_field_audit(Kunde, [])`, derselbe Aufruf wie in der RadarAuditor-App; zwei Tipper; gesperrt, solange ein frischer Herzschlag meldet, dass die Auswertung nicht bereit ist |
+
+Meldungen von RadarAuditor kommen zusätzlich zu ntfy über `supabase/migrations/009_radarauditor.sql` in die Nachrichtenzentrale und aufs Handy. Die Auslöser sitzen auf den Tabellen von RadarAuditor, der Sammler braucht keine Änderung.
+
+| Meldung (Art) | Auslöser | Rang |
+|---|---|---|
+| Audit gestartet (`radar-gestartet`) | erster Versuch des Sammel-Auftrags | info |
+| Audit fertig (`radar-fertig`) | Urteil `gemessen`, mit Punkten | info |
+| Audit unvollständig (`radar-unvollstaendig`) | Urteil `ausgesetzt` | wichtig |
+| Audit fehlgeschlagen (`radar-fehlgeschlagen`) | Urteil `fehlgeschlagen` | dringend |
+| Messung fehlgeschlagen (`radar-messung`) | fehlgeschlagene Messroute, einmal je Route, Grund und Stunde; Stufe 0 und 1 halten den Audit an | dringend bei Stufe 0 und 1, sonst wichtig |
+| Prüfungen ohne Messwert (`radar-ohne-messwert`) | eine Sammelmeldung je Audit, Menge der Prüfungen und Tag | info |
+| Sammler wieder da (`sammler-zurueck`) | Herzschlag nach mehr als 3 Minuten Pause | info |
+
+Monatsprüfungen (eine Zeile in `crm.audit_runs`) haben schon Meldungen des CRM, deshalb entfallen für sie „gestartet“ und „fertig“. Freigabe-Anfragen von Agenten kommen als CRM-Meldung „Freigabe nötig“ (`crm.approvals`, siehe `10_Bibliothek/11_Skills/09_arbeitsweise_agenten/freigabe-vor-versand`).
 ## Assistent
 **Context:** Seite `/assistent`, mit einem Tippen erreichbar: Mikrofon-Knopf in der oberen Leiste auf dem Handy, „Assistent“ in der Seitenleiste und eine Verknüpfung beim langen Drücken auf das installierte App-Symbol. | **Input:** eine geschriebene Anfrage oder eine Sprachaufnahme. | **Output:** eine Zeile in `crm.assistant_requests`; der Server-Arbeiter antwortet mit einer Nachricht der Art `assistent`.
 
@@ -43,5 +71,6 @@ Serveradresse und öffentlicher Schlüssel kommen beim Bauen über `VITE_SUPABAS
 | App und Service Worker | `cd app && npm ci && npm run check && npm test && npm run build` |
 | Edge Function | `deno check supabase/functions/cockpit-push/index.ts deploy/cockpit-push.ts` und `deno test --allow-read supabase/functions/cockpit-push deploy` |
 | Eine-Datei-Fassung nach Änderung der Funktion | `deno run --allow-read --allow-write deploy/bundle.ts` |
+| Auslöser der RadarAuditor-Meldungen | `powershell -File tests/sql/run.ps1` (Wegwerf-PostgreSQL in Docker, spielt alle Migrationen in der Live-Reihenfolge und `tests/sql/radarauditor_test.sql` ein) |
 
 App veröffentlichen: `npx wrangler@4 pages deploy dist --project-name repocity-cockpit --branch main`.
