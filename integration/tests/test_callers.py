@@ -18,7 +18,12 @@ from repocity_integration.references import Embed, Reference
 
 # Rows built from a list the caller passes in; the scenario tests write the same shapes.
 UNRESOLVED = {
+    "crm/app/src/api/crm.ts invoice_items payload rows",
+    "crm/app/src/api/crm.ts quote_items payload rows",
+    "radarauditor/src/radarauditor/db/repositories.py ? name table",
+    "radarauditor/src/radarauditor/db/repositories.py audit_events payload rows",
     "radarauditor/src/radarauditor/db/repositories.py check_results payload rows",
+    "radarauditor/src/radarauditor/db/repositories.py check_results payload values",
     "radarauditor/src/radarauditor/db/repositories.py findings payload rows",
 }
 

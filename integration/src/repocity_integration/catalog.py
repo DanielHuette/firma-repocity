@@ -191,6 +191,8 @@ def check_all(catalog: Catalog, references: list[Reference]) -> list[str]:
     """Every mismatch, one line each: location, call and what is wrong."""
     lines: list[str] = []
     for reference in references:
+        if reference.name == "?":
+            continue
         check = _check_rpc if reference.kind == "rpc" else _check_table
         lines += [
             f"{reference.location} {reference.schema}.{reference.name}: {problem}"
